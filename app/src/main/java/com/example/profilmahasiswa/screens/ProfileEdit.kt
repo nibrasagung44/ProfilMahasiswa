@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,25 +21,28 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.profilmahasiswa.R
+import com.example.profilmahasiswa.model.Mahasiswa
 import com.example.profilmahasiswa.ui.theme.ProfilMahasiswaTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileEditScreen(onNavigateBack: () -> Unit = {}) {
-    // State management
-    var isEditing by remember { mutableStateOf(false) }
-    
-    // Data profil
-    var email by remember { mutableStateOf("ahmad.fauzi@student.ac.id") }
-    var telepon by remember { mutableStateOf("+62 812-3456-7890") }
-    var alamat by remember { mutableStateOf("Malang, Jawa Timur") }
+fun ProfileEditScreen(
+    mahasiswa: Mahasiswa,
+    onNavigateBack: () -> Unit,
+    onSaveMahasiswa: (Mahasiswa) -> Unit
+) {
+    // State management with rememberSaveable
+    var nama by rememberSaveable { mutableStateOf(mahasiswa.nama) }
+    var jurusan by rememberSaveable { mutableStateOf(mahasiswa.jurusan) }
+    var email by rememberSaveable { mutableStateOf(mahasiswa.email) }
+    var telepon by rememberSaveable { mutableStateOf(mahasiswa.telepon) }
+    var alamat by rememberSaveable { mutableStateOf(mahasiswa.alamat) }
 
     Scaffold(
         topBar = {
@@ -52,17 +56,14 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit = {}) {
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Kembali"
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    //colorResource(id = R.color.colorOrange)
-                    //containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    containerColor = colorResource(id = R.color.colorPrimary),
-                    //titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    titleContentColor = colorResource(id = R.color.colorPrimaryonContainer)
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         }
@@ -76,23 +77,15 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit = {}) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Re-implementing ProfilePhotoSection to keep it standalone
             ProfilePhotoSectionStandalone()
 
-            // Identity Section
+            // Identity Section (NIM is typically not editable)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "Ahmad Fauzi Rahman",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = "NIM: 20210001",
+                    text = "NIM: ${mahasiswa.nim}",
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -112,7 +105,7 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit = {}) {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "📞 Informasi Kontak",
+                        text = "📝 Edit Data",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -120,27 +113,34 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit = {}) {
 
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         EditRow(
+                            icon = Icons.Default.Person,
+                            label = "Nama",
+                            value = nama,
+                            onValueChange = { nama = it }
+                        )
+                        EditRow(
+                            icon = Icons.Default.School,
+                            label = "Jurusan",
+                            value = jurusan,
+                            onValueChange = { jurusan = it }
+                        )
+                        EditRow(
                             icon = Icons.Default.Email,
                             label = "Email",
                             value = email,
-                            onValueChange = { email = it },
-                            enabled = isEditing
+                            onValueChange = { email = it }
                         )
-
                         EditRow(
                             icon = Icons.Default.Phone,
                             label = "Telepon",
                             value = telepon,
-                            onValueChange = { telepon = it },
-                            enabled = isEditing
+                            onValueChange = { telepon = it }
                         )
-
                         EditRow(
                             icon = Icons.Default.LocationOn,
                             label = "Alamat",
                             value = alamat,
-                            onValueChange = { alamat = it },
-                            enabled = isEditing
+                            onValueChange = { alamat = it }
                         )
                     }
                 }
@@ -148,26 +148,30 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit = {}) {
 
             // Action Button Section
             Button(
-                onClick = { isEditing = !isEditing },
+                onClick = {
+                    onSaveMahasiswa(
+                        mahasiswa.copy(
+                            nama = nama,
+                            jurusan = jurusan,
+                            email = email,
+                            telepon = telepon,
+                            alamat = alamat
+                        )
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isEditing) 
-                        colorResource(id = R.color.colorOrange) // Green for Simpan
-                    else 
-                        MaterialTheme.colorScheme.primary
-                )
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
-                    imageVector = if (isEditing) Icons.Default.Save else Icons.Default.Edit,
+                    imageVector = Icons.Default.Save,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isEditing) "Simpan" else "Edit",
+                    text = "Simpan Perubahan",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -181,7 +185,7 @@ fun ProfilePhotoSectionStandalone() {
     Box(contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
-                .size(180.dp)
+                .size(120.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.linearGradient(
@@ -191,32 +195,16 @@ fun ProfilePhotoSectionStandalone() {
                         )
                     )
                 )
-                .border(5.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Foto Profil",
                 modifier = Modifier
-                    .size(150.dp)
+                    .size(100.dp)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
-            )
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(colorResource(id = R.color.colorSubmit))
-                .border(2.dp, Color.White, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Aktif",
-                tint = Color.White,
-                modifier = Modifier.size(16.dp)
             )
         }
     }
@@ -227,8 +215,7 @@ fun EditRow(
     icon: ImageVector,
     label: String,
     value: String,
-    onValueChange: (String) -> Unit,
-    enabled: Boolean
+    onValueChange: (String) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -261,24 +248,29 @@ fun EditRow(
             value = value,
             onValueChange = onValueChange,
             label = { Text(label, fontSize = 12.sp) },
-            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = Color.Transparent,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
         )
     }
 }
 
-    @Preview(showBackground = true, showSystemUi = true)
-    @Composable
-    fun ProfileEditScreenPreview() {
-        ProfilMahasiswaTheme {
-            ProfileEditScreen()
-        }
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ProfileEditScreenPreview() {
+    val sampleMahasiswa = Mahasiswa(
+        "20210001",
+        "Ahmad Fauzi Rahman",
+        "Teknik Informatika",
+        "ahmad.fauzi@student.ac.id",
+        "+62 812-3456-7890",
+        "Malang, Jawa Timur"
+    )
+    ProfilMahasiswaTheme {
+        ProfileEditScreen(
+            mahasiswa = sampleMahasiswa,
+            onNavigateBack = {},
+            onSaveMahasiswa = {}
+        )
     }
+}

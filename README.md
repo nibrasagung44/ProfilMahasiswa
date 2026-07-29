@@ -1,36 +1,34 @@
 # Aplikasi Profil Mahasiswa
 
-Aplikasi Android berbasis Jetpack Compose untuk mengelola profil mahasiswa, melakukan pengeditan data kontak, dan melihat data nilai akademik.
+Aplikasi Android berbasis Jetpack Compose untuk mengelola daftar mahasiswa, melakukan pengeditan data, dan melihat nilai akademik.
 
 ## Fitur Utama
 
-- **Navigasi Antar Layar**: Perpindahan mulus antara Layar Profil, Layar Edit Profil, dan Layar Data Nilai menggunakan state management di `MainActivity`.
-- **Layar Profil**: Menampilkan informasi utama mahasiswa, foto profil dengan badge status, kartu informasi kontak, dan statistik akademik (IPK, SKS, Semester).
-- **Layar Edit Profil**: Memungkinkan pengguna untuk mengubah data kontak (Email, Telepon, Alamat) dengan mode edit yang dapat diaktifkan/dinonaktifkan.
-- **Layar Data Nilai**: Menampilkan daftar mata kuliah beserta nilai dan grade dalam format kartu dan tabel yang rapi.
+- **Daftar Mahasiswa (Home)**: Menampilkan list mahasiswa menggunakan `LazyColumn` dengan navigasi ke detail masing-masing.
+- **Detail Profil**: Menampilkan informasi lengkap mahasiswa, termasuk statistik akademik dan akses ke data nilai.
+- **Tambah Mahasiswa**: Form input untuk menambahkan data mahasiswa baru ke dalam daftar.
+- **Edit Profil**: Memungkinkan pembaruan data mahasiswa yang sudah ada (Nama, Jurusan, Email, Telepon, Alamat).
+- **Data Nilai**: Menampilkan transkrip nilai akademik mahasiswa tertentu dengan layout tabel yang menarik.
 
-## Perubahan yang Telah Dilakukan
+## Perubahan yang Telah Dilakukan (Refaktor Navigation & State)
 
 ### 1. Arsitektur & Navigasi
-- Mengimplementasikan logika navigasi manual menggunakan `mutableStateOf` di `MainActivity` untuk berpindah antar screen tanpa library eksternal, sesuai dengan kebutuhan tugas.
-- Menambahkan parameter callback (`onNavigateToEdit`, `onNavigateBack`, dll.) pada setiap screen untuk mendukung komunikasi antar komponen.
+- **Navigation Compose**: Mengimplementasikan `androidx.navigation:navigation-compose` untuk menangani rute antar layar secara profesional.
+- **Dynamic Routing**: Mendukung parameter rute seperti `detail/{nim}`, `edit/{nim}`, dan `data_nilai/{nim}`.
+- **State Hoisting**: Memindahkan state utama `mahasiswaList` ke `MainActivity` untuk konsistensi data di seluruh aplikasi.
 
-### 2. Antarmuka Pengguna (UI) & Material 3
-- **Scaffold & TopAppBar**: Menggunakan struktur layout standar Material 3 dengan bilah aplikasi atas yang memiliki ikon navigasi (back) dan aksi (edit).
-- **Komponen Kustom**: Membuat komponen reusable seperti `ContactRow` untuk informasi kontak, `StatItem` untuk angka statistik, dan `EditRow` untuk field input.
-- **Styling Lanjut**: 
-    - Penggunaan `Card` dengan elevasi dan sudut membulat (`RoundedCornerShape`).
-    - Implementasi `Box` untuk layering elemen (contoh: badge status di atas foto profil).
-    - Penggunaan `Brush.linearGradient` untuk background foto profil.
-- **Responsivitas**: Menggunakan `Modifier.weight()` untuk pembagian kolom statistik yang sama rata dan `fillMaxWidth()` agar UI adaptif terhadap lebar layar.
+### 2. Persistensi State & Model
+- **Parcelable Model**: Mengaktifkan `kotlin-parcelize` pada model `Mahasiswa` agar objek dapat dipertahankan saat terjadi proses sistem (seperti rotasi layar).
+- **rememberSaveable**: Menggunakan `rememberSaveable` pada field input form untuk memastikan data yang sedang diketik tidak hilang saat orientasi layar berubah.
 
-### 3. State Management
-- Menggunakan `remember` dan `mutableStateOf` untuk mengelola data input di form edit.
-- Menangani status interaksi seperti `editCount` (penghitung klik) dan `isEditing` (toggle mode baca/tulis).
+### 3. Antarmuka Pengguna (UI) & Material 3
+- **Modern Scaffold**: Implementasi `Scaffold` di setiap layar dengan `TopAppBar` yang adaptif dan `FloatingActionButton` untuk aksi tambah data.
+- **Lazy Layouts**: Penggunaan `LazyColumn` untuk efisiensi tampilan daftar mahasiswa yang banyak.
+- **Dynamic Screens**: Layar Profil, Edit, dan Data Nilai kini mengambil data secara dinamis berdasarkan parameter NIM dari navigasi.
 
-### 4. Media & Resource
-- Mengganti penggunaan ikon placeholder dengan komponen `Image` dan `painterResource` untuk menampilkan foto profil dari drawable project.
-- Integrasi warna kustom dari `colors.xml` (seperti `colorPrimary` dan `colorOrange`).
+### 4. Logic & Interaction
+- **Callback Pattern**: Menggunakan lambda untuk navigasi dan aksi simpan data, memisahkan logika navigasi dari tampilan UI.
+- **Update Logic**: Implementasi logika update list mahasiswa menggunakan `mahasiswaList.map` untuk memperbarui data spesifik tanpa merusak list utama.
 
 ## Tampilan Aplikasi
 
@@ -38,6 +36,8 @@ Aplikasi Android berbasis Jetpack Compose untuk mengelola profil mahasiswa, mela
 
 ## Teknologi yang Digunakan
 - **Kotlin**
-- **Jetpack Compose**
-- **Material Design 3**
+- **Jetpack Compose** (UI Framework)
+- **Navigation Compose** (Routing)
+- **Material Design 3** (Design System)
+- **Kotlin Parcelize** (State Persistence)
 - **Android Studio Ladybug**

@@ -5,37 +5,120 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
-import com.example.profilmahasiswa.screens.DataNilaiScreen
-import com.example.profilmahasiswa.screens.ProfileEditScreen
-import com.example.profilmahasiswa.screens.ProfileScreen
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.profilmahasiswa.model.Mahasiswa
+import com.example.profilmahasiswa.screens.*
 import com.example.profilmahasiswa.ui.theme.ProfilMahasiswaTheme
 
-/**
- * MainActivity - Entry point aplikasi.
- *
- * Di Jetpack Compose, kita tidak lagi menggunakan XML layout.
- * Semua UI didefinisikan sebagai fungsi @Composable di dalam setContent { }.
- */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge() // Menggunakan full screen edge-to-edge
+        enableEdgeToEdge()
 
         setContent {
             ProfilMahasiswaTheme {
-                var currentScreen by remember { mutableStateOf("profile") }
+                val navController = rememberNavController()
+                
+                // Data State Management (Hoisted)
+                var mahasiswaList by rememberSaveable {
+                    mutableStateOf(
+                        listOf(
+                            Mahasiswa(
+                                "20210001",
+                                "Ahmad Fauzi Rahman",
+                                "Teknik Informatika",
+                                "ahmad.fauzi@student.ac.id",
+                                "+62 812-3456-7890",
+                                "Malang, Jawa Timur"
+                            )
+                        )
+                    )
+                }
 
-                when (currentScreen) {
-                    "profile" -> ProfileScreen(
-                        onNavigateToEdit = { currentScreen = "edit" },
-                        onNavigateToDataNilai = { currentScreen = "data_nilai" }
-                    )
-                    "edit" -> ProfileEditScreen(
-                        onNavigateBack = { currentScreen = "profile" }
-                    )
-                    "data_nilai" -> DataNilaiScreen(
-                        onNavigateBack = { currentScreen = "profile" }
-                    )
+                NavHost(navController = navController, startDestination = "home") {
+                    composable("home") {
+                        HomeScreen(
+                            mahasiswaList = mahasiswaList,
+                            onMahasiswaClick = { mahasiswa ->
+                                navController.navigate("detail/${mahasiswa.nim}")
+                            },
+                            onAddMahasiswaClick = {
+                                navController.navigate("tambah")
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = "detail/{nim}",
+                        arguments = listOf(navArgument("nim") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val nim = backStackEntry.arguments?.getString("nim")
+                        val mahasiswa = mahasiswaList.find { it.nim == nim }
+                        
+                        if (mahasiswa != null) {
+                            ProfileScreen(
+                                mahasiswa = mahasiswa,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToEdit = { editNim ->
+                                    navController.navigate("edit/$editNim")
+                                },
+                                onNavigateToDataNilai = { detailNim ->
+                                    navController.navigate("data_nilai/$detailNim")
+                                }
+                            )
+                        }
+                    }
+
+                    composable(
+                        route = "data_nilai/{nim}",
+                        arguments = listOf(navArgument("nim") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val nim = backStackEntry.arguments?.getString("nim")
+                        val mahasiswa = mahasiswaList.find { it.nim == nim }
+
+                        if (mahasiswa != null) {
+                            DataNilaiScreen(
+                                mahasiswa = mahasiswa,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+                    }
+
+                    composable(
+                        route = "edit/{nim}",
+                        arguments = listOf(navArgument("nim") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val nim = backStackEntry.arguments?.getString("nim")
+                        val mahasiswa = mahasiswaList.find { it.nim == nim }
+                        
+                        if (mahasiswa != null) {
+                            ProfileEditScreen(
+                                mahasiswa = mahasiswa,
+                                onNavigateBack = { navController.popBackStack() },
+                                onSaveMahasiswa = { updatedMahasiswa ->
+                                    mahasiswaList = mahasiswaList.map {
+                                        if (it.nim == updatedMahasiswa.nim) updatedMahasiswa else it
+                                    }
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+                    }
+
+                    composable("tambah") {
+                        TambahMahasiswaScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onSaveMahasiswa = { newMahasiswa ->
+                                mahasiswaList = mahasiswaList + newMahasiswa
+                                navController.popBackStack()
+                            }
+                        )
+                    }
                 }
             }
         }

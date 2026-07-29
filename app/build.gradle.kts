@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -64,6 +65,9 @@ dependencies {
 
     // Material Icons Extended (opsional, untuk icon tambahan)
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.8.5")
 
     // Debug tools
     debugImplementation(libs.androidx.ui.tooling)
